@@ -1,0 +1,48 @@
+CREATE TABLE Library (
+  BookID INT PRIMARY KEY,
+  Title VARCHAR(100),
+  Author VARCHAR(100),
+  Price DECIMAL(8,2)
+);
+
+CREATE TABLE Library_Audit (
+  BookID INT,
+  Title VARCHAR(100),
+  Author VARCHAR(100),
+  Price DECIMAL(8,2),
+  Action_Type VARCHAR(20),
+  Action_Time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+DELIMITER $$
+
+CREATE TRIGGER trg_library_update
+AFTER UPDATE
+ON Library
+FOR EACH ROW
+BEGIN
+  INSERT INTO Library_Audit (BookID, Title, Author, Price, Action_Type)
+  VALUES (OLD.BookID, OLD.Title, OLD.Author, OLD.Price, 'UPDATED');
+END$$
+
+DELIMITER ;
+
+
+DELIMITER $$
+CREATE TRIGGER trg_library_delete
+AFTER delete
+ON Library_Audit
+FOR EACH ROW
+BEGIN
+  INSERT INTO Library_Audit
+  VALUES(OLD.BookID,OLD.Title,OLD.Author,OLD.Price,'UPDATED');
+END$$
+
+DELIMITER ;
+
+INSERT INTO Library VALUES (1, 'DBMS', 'Ramakrishnan', 500);
+UPDATE Library SET Price = 600 WHERE BookID = 1;
+DELETE FROM Library WHERE BookID = 1;
+
+SELECT * FROM Library_Audit;
+
