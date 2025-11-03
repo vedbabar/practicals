@@ -1,0 +1,25 @@
+create table areas(
+  radius decimal,
+  area decimal
+);
+
+DELIMITER $$
+CREATE PROCEDURE populate_areas(IN r INT)
+BEGIN
+IF(r<5 OR r>9) THEN
+SIGNAL SQLSTATE '45000'
+SET MESSAGE_TEXT='Radius is out of bound !!';
+ELSE 
+INSERT INTO areas(radius,area)
+VALUES (r,PI()*r*r);
+END IF;
+END$$
+
+DELIMITER ;
+
+
+CALL populate_areas(5);
+
+
+-- call populate_areas(10);
+SELECT * FROM areas;
