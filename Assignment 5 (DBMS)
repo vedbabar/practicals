@@ -1,0 +1,60 @@
+CREATE TABLE stud_marks(
+  roll INT,
+  name VARCHAR(50),
+  total_marks INT
+);
+
+CREATE TABLE result(
+  roll INT,
+  name VARCHAR(50),
+  class VARCHAR(30)
+);
+
+INSERT INTO stud_marks VALUES
+(1, 'Amit', 1000),
+(2, 'Neha', 950),
+(3, 'Raj', 870),
+(4, 'Tina', 780);
+
+DELIMITER $$
+
+CREATE PROCEDURE proc_grade(IN r INT)
+BEGIN
+    DECLARE marks INT DEFAULT 0;
+    DECLARE names VARCHAR(50);
+    DECLARE status VARCHAR(50) DEFAULT 'FAIL';
+
+    -- Get student marks and name
+    SELECT total_marks, name 
+    INTO marks, names
+    FROM stud_marks
+    WHERE roll = r;
+
+    -- Handle invalid roll number
+    IF (marks IS NULL) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: Roll number not found!';
+    END IF;
+
+    -- Decide the class
+    IF (marks BETWEEN 990 AND 1500) THEN
+        SET status = 'DISTINCTION';
+    ELSEIF (marks BETWEEN 900 AND 989) THEN
+        SET status = 'FIRST CLASS';
+    ELSEIF (marks BETWEEN 825 AND 899) THEN
+        SET status = 'HIGHER SECOND CLASS';
+    END IF;
+
+    -- Insert result into result table
+    INSERT INTO result (roll, name, class)
+    VALUES (r, names, status);
+END$$
+
+DELIMITER ;
+
+CALL proc_grade(1);
+CALL proc_grade(2);
+CALL proc_grade(3);
+CALL proc_grade(4);
+
+SELECT * FROM result;
