@@ -1,0 +1,65 @@
+Problem Statement
+
+Write a parameterized cursor in MySQL to merge data from table old_emp into table new_emp.
+If an employee record already exists in new_emp, skip it.
+
+
+CREATE TABLE old_emp (
+  id INT PRIMARY KEY,
+  name VARCHAR(50),
+  salary DECIMAL(10,2)
+);
+
+CREATE TABLE new_emp (
+  id INT PRIMARY KEY,
+  name VARCHAR(50),
+  salary DECIMAL(10,2)
+);
+
+-- Sample Data
+INSERT INTO old_emp VALUES
+(1, 'Amit', 50000),
+(2, 'Neha', 60000),
+(3, 'Ravi', 55000);
+
+INSERT INTO new_emp VALUES
+(2, 'Neha', 60000);  -- one record already exists
+
+DELIMITER $$
+
+CREATE PROCEDURE merge_emp(IN minSalary DECIMAL(10,2))
+BEGIN
+  DECLARE done INT DEFAULT FALSE;
+  DECLARE eid INT;
+  DECLARE ename VARCHAR(50);
+  DECLARE esal DECIMAL(10,2);
+
+  -- Cursor: fetch employees from old_emp with salary >= minSalary
+  DECLARE emp_cursor CURSOR FOR
+    SELECT id, name, salary FROM old_emp WHERE salary >= minSalary;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+  OPEN emp_cursor;
+
+  read_loop: LOOP
+    FETCH emp_cursor INTO eid, ename, esal;
+    IF done THEN
+      LEAVE read_loop;
+    END IF;
+
+    -- If employee not already in new_emp, insert them
+    IF NOT EXISTS (SELECT id FROM new_emp WHERE id = eid) THEN
+      INSERT INTO new_emp VALUES (eid, ename, esal);
+    END IF;
+
+  END LOOP;
+
+  CLOSE emp_cursor;
+END$$
+
+DELIMITER ;
+
+
+CALL merge_emp(52000);
+SELECT * FROM new_emp;
