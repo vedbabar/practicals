@@ -1,0 +1,104 @@
+package assign8;
+import java.sql.*;
+import java.util.*;
+
+public class SimpleCRUD {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Connection con = null;
+
+        try {
+            // 1️⃣ Load MySQL JDBC driver
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // 2️⃣ Connect to database
+            con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/studentdb", "root", "your_password");
+
+            System.out.println("Connected to MySQL successfully!");
+
+            while (true) {
+                System.out.println("\n--- MENU ---");
+                System.out.println("1. Add Student");
+                System.out.println("2. View Students");
+                System.out.println("3. Update Student");
+                System.out.println("4. Delete Student");
+                System.out.println("5. Exit");
+                System.out.print("Enter your choice: ");
+                int ch = sc.nextInt();
+
+                if (ch == 1) {
+                    System.out.print("Enter name: ");
+                    String name = sc.next();
+                    System.out.print("Enter age: ");
+                    int age = sc.nextInt();
+
+                    String sql = "INSERT INTO students (name, age) VALUES (?, ?)";
+                    PreparedStatement pst = con.prepareStatement(sql);
+                    pst.setString(1, name);
+                    pst.setInt(2, age);
+                    pst.executeUpdate();
+                    System.out.println("✅ Student Added!");
+                }
+
+                else if (ch == 2) {
+                    Statement st = con.createStatement();
+                    ResultSet rs = st.executeQuery("SELECT * FROM students");
+                    System.out.println("\n--- Student List ---");
+                    while (rs.next()) {
+                        System.out.println(rs.getInt("id") + " | " + rs.getString("name") + " | " + rs.getInt("age"));
+                    }
+                }
+
+                else if (ch == 3) {
+                    System.out.print("Enter student ID to update: ");
+                    int id = sc.nextInt();
+                    System.out.print("Enter new name: ");
+                    String name = sc.next();
+                    System.out.print("Enter new age: ");
+                    int age = sc.nextInt();
+
+                    String sql = "UPDATE students SET name=?, age=? WHERE id=?";
+                    PreparedStatement pst = con.prepareStatement(sql);
+                    pst.setString(1, name);
+                    pst.setInt(2, age);
+                    pst.setInt(3, id);
+                    int rows = pst.executeUpdate();
+
+                    if (rows > 0)
+                        System.out.println("✅ Student Updated!");
+                    else
+                        System.out.println("❌ Student not found!");
+                }
+
+                else if (ch == 4) {
+                    System.out.print("Enter student ID to delete: ");
+                    int id = sc.nextInt();
+                    String sql = "DELETE FROM students WHERE id=?";
+                    PreparedStatement pst = con.prepareStatement(sql);
+                    pst.setInt(1, id);
+                    int rows = pst.executeUpdate();
+
+                    if (rows > 0)
+                        System.out.println("✅ Student Deleted!");
+                    else
+                        System.out.println("❌ Student not found!");
+                }
+
+                else if (ch == 5) {
+                    System.out.println("Exiting...");
+                    break;
+                }
+
+                else {
+                    System.out.println("Invalid choice!");
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try { if (con != null) con.close(); } catch (Exception e) {}
+        }
+    }
+}
