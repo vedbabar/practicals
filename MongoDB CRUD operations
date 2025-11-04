@@ -1,0 +1,52 @@
+MONGO DB CRUD operations
+Functions used - insertMany , insertOne , $or , $in , $lt , $gt etc.
+find() , findOne() , updateOne() , updateMany() , replaceOne() etc.
+deleteOne() , deleteMany()
+
+
+
+
+use collegeDB;
+
+// 1️⃣ Create (Insert)
+db.students.insertMany([
+  { _id: 1, name: "Ved", age: 21, dept: "Computer", marks: 88, hobbies: ["Coding", "Gaming"] },
+  { _id: 2, name: "Neha", age: 20, dept: "IT", marks: 76, hobbies: ["Reading", "Music"] },
+  { _id: 3, name: "Rohan", age: 22, dept: "EXTC", marks: 90, hobbies: ["Travel", "Cricket"] }
+]);
+
+// 2️⃣ Read
+db.students.find({ marks: { $gt: 80 } });
+
+// 3️⃣ Update
+db.students.updateOne({ name: "Ved" }, { $set: { marks: 95 } });
+db.students.updateMany({ dept: "IT" }, { $inc: { marks: 5 } });
+
+// 4️⃣ Delete
+db.students.deleteOne({ name: "Rohan" });
+
+// 5️⃣ Logical operators
+db.students.find({ $and: [ { age: { $gt: 20 } }, { marks: { $gt: 80 } } ] });
+db.students.find({ $or: [ { dept: "Computer" }, { dept: "IT" } ] });
+db.students.find({ dept: { $nin: ["Civil", "Mechanical"] } });
+db.students.find({ marks: { $not: { $gt: 90 } } });
+db.students.find({ $nor: [ { dept: "EXTC" }, { marks: { $lt: 80 } } ] });
+
+// 6️⃣ Embedded Document Example
+db.students.insertOne({
+  _id: 4,
+  name: "Amit",
+  age: 23,
+  address: { city: "Pune", pincode: 411001 },
+  subjects: [
+    { name: "DBMS", marks: 85 },
+    { name: "OS", marks: 90 },
+    { name: "AI", marks: 88 }
+  ]
+});
+
+// 7️⃣ Using $slice to show first 2 subjects only
+db.students.find({ _id: 4 }, { "subjects": { $slice: 2 } });
+
+// 8️⃣ save() method
+db.students.save({ _id: 5, name: "Ruchi", age: 22, dept: "AI", marks: 86 });
