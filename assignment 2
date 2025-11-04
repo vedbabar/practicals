@@ -1,0 +1,38 @@
+create table Student(
+  stud_id int primary key auto_increment,
+  name varchar(50) not null,
+  age int check(age>=18),
+  email varchar(100) unique,
+  dept_id int
+);
+
+create table Department(
+  dept_id int primary key auto_increment,
+  dept_name varchar(50)
+);
+
+ALTER TABLE Student
+ADD CONSTRAINT fk_dept FOREIGN KEY (dept_id)
+REFERENCES Department(dept_id)
+ON DELETE CASCADE;
+
+
+insert into Department(dept_name)
+values("Computer Science"),
+("AIML"),
+("IT");
+
+insert into Student(name, age, email, dept_id)
+values("Ved",18,"ved@gmail.com",1),
+("Test",18,"test2@gmail.com",2),
+("test2",18,"test1@gmail.com",3);
+
+create view student_view as
+select s.stud_id,s.name,d.dept_name from Student s 
+join department d 
+on s.dept_id=d.dept_id;
+
+
+select * from student_view;
+
+create index idx_student_name on Student(name);
