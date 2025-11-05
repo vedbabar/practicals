@@ -1,0 +1,84 @@
+DELIMITER $$
+
+CREATE PROCEDURE return_book_simple(
+    IN p_roll INT,
+    IN p_book VARCHAR(100)
+)
+BEGIN
+    DECLARE v_date DATE;
+    DECLARE v_days INT DEFAULT 0;
+    DECLARE v_fine DECIMAL(10,2) DEFAULT 0;
+    DECLARE v_status CHAR(1);
+    DECLARE no_data CONDITION FOR SQLSTATE '02000';
+
+    -- Exception handling
+    DECLARE CONTINUE HANDLER FOR no_data
+    BEGIN
+        SELECT 'No such book found or already returned' AS message;
+    END;
+
+    -- Get issue date and status
+    SELECT dateofissue, status
+    INTO v_date, v_status
+    FROM borrower
+    WHERE roll = p_roll AND nameofbook = p_book AND status = 'I';
+
+    -- Calculate fine only if book is issued
+    IF v_status = 'I' THEN
+        SET v_days = DATEDIFF(CURDATE(), v_date);
+
+        IF v_days > 30 THEN
+            SET v_fine = (v_days - 30)*50 + 15*5; -- 5 per day for first 15-30, then 50/day
+        ELSEIF v_days > 15 THEN
+            SET v_fine = (v_days - 15)*5;
+        END IF;
+
+        -- Update status to Returned
+        UPDATE borrower
+        SET status = 'R'
+        WHERE roll = p_roll AND nameofbook = p_book;
+
+        -- Insert into fine table if applicable
+        IF v_fine > 0 THEN
+            INSERT INTO fine (roll, date, amt)
+            VALUES (p_roll, CURDATE(), v_fine);
+            SELECT CONCAT('Book returned with fine Rs ', v_fine) AS message;
+        ELSE
+            SELECT 'Book returned successfully (no fine)' AS message;
+        END IF;
+    ELSE
+        SELECT 'No issued book found for given roll number' AS message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+
+
+
+
+-- Sample data
+CREATE TABLE borrower (
+  roll INT,
+  name VARCHAR(100),
+  dateofissue DATE,
+  nameofbook VARCHAR(100),
+  status CHAR(1)
+);
+
+CREATE TABLE fine (
+  roll INT,
+  date DATE,
+  amt DECIMAL(10,2)
+);
+
+INSERT INTO borrower VALUES
+(1,'Ved','2025-10-01','DSA','I'),
+(2,'Ruchir','2025-10-20','AI','I');
+
+-- Call procedure
+CALL return_book_simple(1,'DSA');
+
+-- View results
+SELECT * FROM borrower;
+SELECT * FROM fine;
