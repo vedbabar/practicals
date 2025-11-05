@@ -1,0 +1,95 @@
+-- Cursor
+create table old_emp(
+  emp_id int,
+  emp_name varchar(50),
+  city varchar(50)
+);
+
+create table new_emp(
+  emp_id int,
+  emp_name varchar(50),
+  city varchar(50)
+);
+
+insert into old_emp values
+(1,"Employee1","Pune"),
+(2,"Employee2","Mumbai"),
+(3,"Employee3","Banglore");
+
+insert into new_emp values
+(1,"Employee1","Pune"),
+(2,"Employee2","Mumbai"),
+(3,"Employee3","Banglore"),
+(4,"ddwdwdwdwdw","Pune"),
+(5,"Employee5","Banglore"),
+(6,"Ved","Banglore");
+
+
+delimiter $$
+
+create procedure merge_employees()
+BEGIN
+declare done int default 0;
+declare v_id int;
+declare v_name varchar(50);
+declare v_city varchar(50);
+
+declare sample_cursor cursor FOR
+select emp_id,emp_name,city from new_emp;
+
+declare continue handler for not found set done=1;
+open sample_cursor;
+
+read_loop:loop
+fetch sample_cursor into v_id,v_name,v_city;
+if done THEN
+leave read_loop;
+end if;
+
+if not exists (select * from old_emp where emp_id=v_id) THEN
+insert into old_emp values(v_id,v_name,v_city);
+end if;
+end loop;
+close sample_cursor;
+end$$
+delimiter ;
+
+
+
+
+
+
+
+
+
+
+
+delete from old_emp where emp_id=1;
+delete from old_emp where emp_id=2;
+
+
+
+
+--IMPLICIT
+DELIMITER $$
+
+CREATE PROCEDURE merge_employees()
+BEGIN
+  -- Insert records from new_emp that do not exist in old_emp
+  INSERT INTO old_emp (emp_id, emp_name, city)
+  SELECT n.emp_id, n.emp_name, n.city
+  FROM new_emp n
+  WHERE n.emp_id NOT IN (SELECT emp_id FROM old_emp);
+
+  -- Implicit cursor is automatically used for the above INSERT SELECT
+  SELECT ROW_COUNT() AS 'Rows Merged';
+END$$
+
+DELIMITER ;
+
+
+select * from old_emp;
+select * from new_emp;
+call merge_employees();
+select * from old_emp
+order by emp_id desc;
