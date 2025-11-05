@@ -1,0 +1,32 @@
+mysql> create table stud_marks(
+    -> roll int,
+    -> name varchar(50),
+    -> total_marks int
+    -> );
+Query OK, 0 rows affected (0.06 sec)
+
+mysql> create table result(
+    -> roll int,
+    -> name varchar(50),
+    -> grade varchar(50));
+delimiter $$
+create procedure grades(in r int)
+begin
+declare grade varchar(50) default 'fail';
+declare rollno int;
+declare n varchar(50);
+declare m varchar(50);
+
+select roll,name,total_marks into rollno,n,m from stud_marks where roll=r;
+if m between 990 and 1500 then
+set grade='Distinction';
+elseif m between 900 and 989 then
+set grade='First Class';
+elseif m between 825 and 899 then
+set grade='Higher Second Class';
+end if;
+
+insert into result values(rollno,n,grade);
+end$$
+
+delimiter ;
