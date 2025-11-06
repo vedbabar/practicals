@@ -1,48 +1,62 @@
-CREATE TABLE Library (
-  BookID INT PRIMARY KEY,
-  Title VARCHAR(100),
-  Author VARCHAR(100),
-  Price DECIMAL(8,2)
-);
-
-CREATE TABLE Library_Audit (
-  BookID INT,
-  Title VARCHAR(100),
-  Author VARCHAR(100),
-  Price DECIMAL(8,2),
-  Action_Type VARCHAR(20),
-  Action_Time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 DELIMITER $$
 
-CREATE TRIGGER trg_library_update
-AFTER UPDATE
-ON Library
+-- 1️⃣ BEFORE INSERT Trigger
+CREATE TRIGGER trg_before_insert
+BEFORE INSERT ON Library
 FOR EACH ROW
 BEGIN
   INSERT INTO Library_Audit (BookID, Title, Author, Price, Action_Type)
-  VALUES (OLD.BookID, OLD.Title, OLD.Author, OLD.Price, 'UPDATED');
+  VALUES (NEW.BookID, NEW.Title, NEW.Author, NEW.Price, 'BEFORE INSERT');
 END$$
 
-DELIMITER ;
 
-
-DELIMITER $$
-CREATE TRIGGER trg_library_delete
-AFTER delete
-ON Library_Audit
+-- 2️⃣ AFTER INSERT Trigger
+CREATE TRIGGER trg_after_insert
+AFTER INSERT ON Library
 FOR EACH ROW
 BEGIN
-  INSERT INTO Library_Audit
-  VALUES(OLD.BookID,OLD.Title,OLD.Author,OLD.Price,'UPDATED');
+  INSERT INTO Library_Audit (BookID, Title, Author, Price, Action_Type)
+  VALUES (NEW.BookID, NEW.Title, NEW.Author, NEW.Price, 'AFTER INSERT');
+END$$
+
+
+-- 3️⃣ BEFORE UPDATE Trigger
+CREATE TRIGGER trg_before_update
+BEFORE UPDATE ON Library
+FOR EACH ROW
+BEGIN
+  INSERT INTO Library_Audit (BookID, Title, Author, Price, Action_Type)
+  VALUES (OLD.BookID, OLD.Title, OLD.Author, OLD.Price, 'BEFORE UPDATE');
+END$$
+
+
+-- 4️⃣ AFTER UPDATE Trigger
+CREATE TRIGGER trg_after_update
+AFTER UPDATE ON Library
+FOR EACH ROW
+BEGIN
+  INSERT INTO Library_Audit (BookID, Title, Author, Price, Action_Type)
+  VALUES (NEW.BookID, NEW.Title, NEW.Author, NEW.Price, 'AFTER UPDATE');
+END$$
+
+
+-- 5️⃣ BEFORE DELETE Trigger
+CREATE TRIGGER trg_before_delete
+BEFORE DELETE ON Library
+FOR EACH ROW
+BEGIN
+  INSERT INTO Library_Audit (BookID, Title, Author, Price, Action_Type)
+  VALUES (OLD.BookID, OLD.Title, OLD.Author, OLD.Price, 'BEFORE DELETE');
+END$$
+
+
+-- 6️⃣ AFTER DELETE Trigger
+CREATE TRIGGER trg_after_delete
+AFTER DELETE ON Library
+FOR EACH ROW
+BEGIN
+  INSERT INTO Library_Audit (BookID, Title, Author, Price, Action_Type)
+  VALUES (OLD.BookID, OLD.Title, OLD.Author, OLD.Price, 'AFTER DELETE');
 END$$
 
 DELIMITER ;
-
-INSERT INTO Library VALUES (1, 'DBMS', 'Ramakrishnan', 500);
-UPDATE Library SET Price = 600 WHERE BookID = 1;
-DELETE FROM Library WHERE BookID = 1;
-
-SELECT * FROM Library_Audit;
-
